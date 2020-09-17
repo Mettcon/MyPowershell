@@ -41,14 +41,11 @@ Export-Csv -Path "$env:HOMEPATH\Desktop\pcsinventory.csv" -NoTypeInformation
   Param(
     [Parameter(Mandatory = $True)]
     [string[]]$Computers
-  )    
+  )
 
-  $Result = [Collections.ArrayList]@() 
-
-  $liveComputers = [Collections.ArrayList]@()
-  foreach ($computer in $computers) {
+  $liveComputers = foreach ($computer in $computers) {
     if (Test-Connection -ComputerName $computer -Quiet -count 1) {
-      $null = $liveComputers.Add($computer)
+      $computer
     }
     else {
       Write-Verbose -Message ('{0} is unreachable' -f $computer) -Verbose
@@ -89,7 +86,7 @@ Export-Csv -Path "$env:HOMEPATH\Desktop\pcsinventory.csv" -NoTypeInformation
     Sort-Object InstalledOn -Descending
    
     # create new custom object to keep adding store information to it
-    $Result += New-Object -TypeName PSCustomObject -Property @{
+    [PSCustomObject]@{
       ComputerName             = $_.ToUpper()
       Manufacturer             = $hardware.Manufacturer
       Model                    = $hardware.Model
@@ -127,18 +124,4 @@ Export-Csv -Path "$env:HOMEPATH\Desktop\pcsinventory.csv" -NoTypeInformation
       InstalledOn              = ($hotFixes.InstalledOn -replace (",", "\n") | Out-String)
     }
   }
-
-  # Column ordering, re-order if you like 
-  $colOrder = 'ComputerName', 'Manufacturer', 'Model', 'SystemType',
-  'ProductName', 'OSVersion', 'BuildNumber', 'OSArchitecture', 'OSSerialNumber',
-  'SerialNumber', 'BIOSReleaseDate', 'BIOSVersion', 'BIOSMajorVersion',
-  'BIOSMinorVersion', 'LastBootTime', 'InstallDate', 'Domain',
-  'IPAddress', 'SubnetMask', 'DefaultGateway', 'MACAddress',
-  'DHCPEnabled', 'DHCPServer', 'LeaseObtained', 'LeaseExpires',
-  'AdapterInfo', 'TotalMemoryGB', 'CFreeSpaceGB', 'CPU', 'CPUCores',
-  'CPULogicalCores', 'CPUVirtualizationEnabled', 'HotFixID',
-  'Description', 'InstalledOn'
-
-  # Return all your results
-  $Result | Select-Object -Property $colOrder
 }
